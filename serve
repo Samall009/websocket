@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+require_once "vendor/autoload.php";
+
+use Events\EventBind;
+use Workerman\Worker;
+
+// 运行在主进程
+$serve = new Worker("websocket://0.0.0.0:2347");
+
+// 绑定事件
+EventBind::eventBind($serve);
+
+// 运行worker程序
+Worker::runAll();

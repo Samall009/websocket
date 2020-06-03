@@ -1,0 +1,7 @@
+{
+    "require": {
+        "php": "^7.1",
+        "workerman/workerman": "^4.0",
+        "workerman/gateway-worker": "^3.0"
+    }
+}

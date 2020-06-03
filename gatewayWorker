@@ -1,0 +1,76 @@
+#!/usr/bin/env php
+<?php
+
+require_once "vendor/autoload.php";
+
+// 引入命名空间
+use Events\Events;
+use GatewayWorker\BusinessWorker;
+use GatewayWorker\Gateway;
+use GatewayWorker\Register;
+use Workerman\Worker;
+
+/**
+ * socket事件处理程序
+ */
+function startBusinessWorker()
+{
+    $worker = new BusinessWorker();
+    $worker->name = '事件处理';
+    $worker->count = 1;
+    $worker->registerAddress = '127.0.0.1:1236';
+    $worker->eventHandler = Events::class;
+}
+
+/**
+ * 通信处理程序
+ */
+function startGateWay()
+{
+    $gateway = new Gateway("websocket://0.0.0.0:2346");
+    $gateway->name = 'socket进程';
+    $gateway->count = 4;
+    $gateway->lanIp = '127.0.0.1';
+    $gateway->startPort = 2300;
+    $gateway->pingInterval = 0;
+    $gateway->pingNotResponseLimit = 0;
+    $gateway->registerAddress = '127.0.0.1:1236';
+}
+
+/**
+ * master服务
+ */
+function startRegister()
+{
+    $worker = new Register('text://0.0.0.0:1236');
+    $worker->name = '主进程';
+}
+
+if (strpos(strtoupper(PHP_OS), 'WIN') !== false) {
+    if (!isset($argv[1])) {
+        throw new Exception('未定义的方法');
+    }
+
+    $action = $argv[1];
+
+    if ($action === 'register') {
+        // 启动主进程
+        startRegister();
+    } elseif ($action === 'gateway') {
+        // 注册socket进程
+        startGateWay();
+    } elseif ($action === 'worker') {
+        // 注册事件处理进程
+        startBusinessWorker();
+    }
+
+    // 运行服务
+    Worker::runAll();
+} else {
+    startGateWay();
+    startBusinessWorker();
+    startRegister();
+
+    // 运行服务
+    Worker::runAll();
+}
